@@ -31,6 +31,15 @@ COUNTRY_CODE_MAP = {
     "UAE": "AE",
 }
 
+session_definitions = [
+    ("First Practice", "FirstPractice"),
+    ("Second Practice", "SecondPractice"),
+    ("Third Practice", "ThirdPractice"),
+    ("Sprint Qualifying", "SprintQualifying"),
+    ("Sprint", "Sprint"),
+    ("Qualifying", "Qualifying")
+]
+
 # Flask app setup
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -88,7 +97,37 @@ def get_next_meeting(meetings):
         key=lambda m: datetime.fromisoformat(f"{m['date']}T{m['time']}".replace("Z", "+00:00")),
         default=None  # return None if no future meetings
     )
-    
+
+def sort_sessions_in_meeting(meeting):
+
+    # Extract and sort sessions into session list
+    sessions = []
+    for session_name, session_key in session_definitions:
+        if session_key in meeting:
+            session_data = meeting.pop(session_key)
+            sessions.append(
+                {
+                    "name": session_name,
+                    "key": session_key,
+                    "date": session_data["date"],
+                    "time": session_data["time"],
+                }
+            )
+
+    # Add the Race session separately as it is not returned as an indivdual session by jolpica, rather as the main meeting date/time
+    sessions.append({
+        "name": "Race",
+        "key": "Race",
+        "date": meeting.pop("date"),
+        "time": meeting.pop("time"),
+        "formattedTime": meeting.pop("formattedTime", None)
+    })
+
+    meeting['sessions'] = sessions
+    print(meeting)
+
+    return meeting
+
 # Map country names to their respective ISO 3166-1 alpha-2 codes
 def get_country_code(meeting):
     country = meeting['Circuit']['Location']['country']
@@ -146,6 +185,9 @@ def next_race():
         
         # Add country code for flag display
         next_meeting = get_country_code(next_meeting)
+        # Sort sessions in the meeting
+        next_meeting = sort_sessions_in_meeting(next_meeting)
+
         return jsonify(next_meeting)
 
     except httpx.HTTPStatusError as e:
