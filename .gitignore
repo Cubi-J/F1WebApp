@@ -20,8 +20,8 @@
 # Python/Flask Backend
 # -----------------------------------------------------------------------------
 # Virtual Environment
-/venv
-/env
+/backend/venv
+/backend/env
 
 # Compiled Python files
 *.pyc

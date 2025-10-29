@@ -1,7 +1,21 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, jsonify, send_from_directory
 import httpx
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
+
+# MariaDB Config
+MARIADB_USERNAME = os.getenv('DB_USERNAME') 
+MARIADB_PASSWORD = os.getenv('DB_PASSWORD') 
+MARIADB_HOST = os.getenv('DB_HOST', 'localhost')
+MARIADB_PORT = os.getenv('DB_PORT')
+MARIADB_DATABASE = os.getenv('DB_NAME')
+
+SQLALCHEMY_DATABASE_URI = (
+    f"mysql+pymysql://{MARIADB_USERNAME}:{MARIADB_PASSWORD}@{MARIADB_HOST}:{MARIADB_PORT}/{MARIADB_DATABASE}"
+)
 
 # Constants
 OPENF1_BASE = "https://api.openf1.org/v1"
@@ -43,6 +57,9 @@ session_definitions = [
 # Flask app setup
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+
+db = SQLAlchemy(app)
 
 # Functions
 
